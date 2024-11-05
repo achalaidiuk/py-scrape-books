@@ -20,8 +20,11 @@ class BookSpider(scrapy.Spider):
     def extract_book_name(self, response: Response) -> str:
         return response.css("h1::text").get()
 
-    def get_price(self, response: Response) -> int:
-        return response.css(".price_color::text").get()
+    def get_price(self, response: Response) -> float:
+        price_str = response.css(".price_color::text").get()
+        if price_str:
+            return float(price_str.replace("£", "").strip())
+        return 0.0
 
     def get_amount_in_stock(self, response: Response) -> int:
         return int(
@@ -31,7 +34,17 @@ class BookSpider(scrapy.Spider):
         )
 
     def get_rating(self, response: Response) -> int:
-        return response.css("p.star-rating::attr(class)").get().split()[-1]
+        rating_str = response.css(
+            "p.star-rating::attr(class)"
+        ).get().split()[-1]
+        rating_map = {
+            "One": 1,
+            "Two": 2,
+            "Three": 3,
+            "Four": 4,
+            "Five": 5
+        }
+        return rating_map.get(rating_str, 0)
 
     def get_category(self, response: Response) -> str:
         return response.css("ul.breadcrumb li:nth-child(3) a::text").get()
